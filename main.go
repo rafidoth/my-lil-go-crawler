@@ -3,5 +3,6 @@ package main
 import "fmt"
 
 func main() {
-	fmt.Println("hello world")
+	res := getHeadingFromHTML("<html><body><h1>Test Title</h1></body></html>")
+	fmt.Println(res)
 }
