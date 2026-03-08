@@ -1,6 +1,10 @@
 package main
 
-import "testing"
+import (
+	"net/url"
+	"reflect"
+	"testing"
+)
 
 func TestGetHeadingFromHTMLBasic(t *testing.T) {
 	inputBody := "<html><body><h1>Test Title</h1></body></html>"
@@ -25,4 +29,69 @@ func TestGetFirstParagraphFromHTMLMainPriority(t *testing.T) {
 	if actual != expected {
 		t.Errorf("expected %q, got %q", expected, actual)
 	}
+}
+
+func TestGetURLsFromHTMLAbsolute(t *testing.T) {
+	inputURL := "https://crawler-test.com"
+	inputBody := `<html><body><a href="https://crawler-test.com"><span>Boot.dev</span></a></body></html>`
+
+	baseURL, err := url.Parse(inputURL)
+	if err != nil {
+		t.Errorf("couldn't parse input URL: %v", err)
+		return
+	}
+
+	actual, err := getURLsFromHTML(inputBody, baseURL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := []string{"https://crawler-test.com"}
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("expected %v, got %v", expected, actual)
+	}
+}
+
+func TestGetURLsFromHTMLConversionToAbsolute(t *testing.T) {
+	inputURL := "https://crawler-test.com"
+	inputBody := `<html><body><a href="/about"><span>Boot.dev</span></a></body></html>`
+
+	baseURL, err := url.Parse(inputURL)
+	if err != nil {
+		t.Errorf("couldn't parse input URL: %v", err)
+		return
+	}
+
+	actual, err := getURLsFromHTML(inputBody, baseURL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := []string{"https://crawler-test.com/about"}
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("expected %v, got %v", expected, actual)
+	}
+
+}
+
+func TestGetURLsFromHTMLMixedLink(t *testing.T) {
+	inputURL := "https://crawler-test.com"
+	inputBody := `<html><body><a href="https://crawler-test.com"><span>Boot.dev</span></a><a href="/about">hello</a></body></html>`
+
+	baseURL, err := url.Parse(inputURL)
+	if err != nil {
+		t.Errorf("couldn't parse input URL: %v", err)
+		return
+	}
+
+	actual, err := getURLsFromHTML(inputBody, baseURL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := []string{"https://crawler-test.com", "https://crawler-test.com/about"}
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("expected %v, got %v", expected, actual)
+	}
+
 }
