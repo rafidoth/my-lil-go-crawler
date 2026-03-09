@@ -29,6 +29,21 @@ func TestGetFirstParagraphFromHTMLMainPriority(t *testing.T) {
 	if actual != expected {
 		t.Errorf("expected %q, got %q", expected, actual)
 	}
+
+}
+
+func TestGetFirstParagraphFromHTMLFallback(t *testing.T) {
+	inputBody := `<html><body>
+		<p>first paragraph.</p>
+		<p>Main paragraph.</p>
+	</body></html>`
+	actual := getFirstParagraphFromHTML(inputBody)
+	expected := "first paragraph."
+
+	if actual != expected {
+		t.Errorf("expected %q, got %q", expected, actual)
+	}
+
 }
 
 func TestGetURLsFromHTMLAbsolute(t *testing.T) {
