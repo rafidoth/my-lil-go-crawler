@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/url"
 	"strings"
@@ -43,11 +42,19 @@ func getFirstParagraphFromHTML(rawHTML string) string {
 			}
 		}
 	}
+
+	for n := range doc.Descendants() {
+		if n.Type == html.ElementNode && n.DataAtom == atom.P {
+			if n.FirstChild != nil && n.FirstChild.Type == html.TextNode {
+				return n.FirstChild.Data
+			}
+		}
+	}
+
 	return ""
 }
 
 func getURLsFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
-	fmt.Println(baseURL)
 	doc, err := html.Parse(strings.NewReader(htmlBody))
 	if err != nil {
 		return nil, err
@@ -76,5 +83,36 @@ func getURLsFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
 		}
 	}
 
+	return urls, nil
+}
+
+func getImagesFromHTML(inputBody string, baseURL *url.URL) ([]string, error) {
+	doc, err := html.Parse(strings.NewReader(inputBody))
+	if err != nil {
+		return nil, err
+	}
+
+	urls := []string{}
+
+	for n := range doc.Descendants() {
+		if n.Type == html.ElementNode && n.DataAtom == atom.Img {
+			for _, u := range n.Attr {
+				if u.Key == "src" {
+					parsed, err := url.Parse(u.Val)
+					if err != nil {
+						log.Println("error : failed to parse url - ", err)
+						continue
+					}
+					if parsed.Scheme == baseURL.Scheme && parsed.Host == baseURL.Host {
+						urls = append(urls, u.Val)
+						continue
+					}
+
+					abs := baseURL.ResolveReference(parsed)
+					urls = append(urls, abs.String())
+				}
+			}
+		}
+	}
 	return urls, nil
 }
